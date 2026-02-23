@@ -24,11 +24,10 @@ jobs:
         run: |
           export DEVKITPPC=/opt/devkitpro/devkitPPC
           export DEVKITPRO=/opt/devkitpro
-          cd source
           make
           find . -name "*.dol"
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: source/wii-heimdall.dol
+          path: *.dol
