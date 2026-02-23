@@ -26,8 +26,9 @@ jobs:
           export DEVKITPRO=/opt/devkitpro
           make
           find . -name "*.dol"
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: *.dol
+          path: $(find . -name "*.dol").dol
