@@ -19,7 +19,7 @@ TARGET		:=	boot
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=
-INCLUDES	:=
+INCLUDES	:=  source
 
 #---------------------------------------------------------------------------------
 # options for code generation
