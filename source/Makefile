@@ -16,10 +16,10 @@ include $(DEVKITPPC)/wii_rules
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:=	boot
-BUILD		:=	build
+BUILD		:=	source/build
 SOURCES		:=	source
 DATA		:=
-INCLUDES	:=
+INCLUDES	:=  sourcs
 
 #---------------------------------------------------------------------------------
 # options for code generation
