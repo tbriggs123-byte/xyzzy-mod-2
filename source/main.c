@@ -1,59 +1,69 @@
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <gccore.h>
+#include <wiiuse/wpad.h>
+#include "mini-seeprom.h
 
-#include "tools.h"
+// Your buffer to hold the 256 bytes of SEEPROM data
+u8 seeprom_data[256];
+int cursor = 0x88; // Default to the Boot2 version offset
 
-bool g_isvWii = false;
-
-extern void __exception_setreload(int t);
-
-int XyzzyGetKeys(void);
-
-int main(int argc, char **argv)
-{
-    __exception_setreload(10);
-
-    int ret = 0;
-
-    InitConsole();
-    InitPads();
-
-    g_isvWii = IsWiiU();
-
-    PrintHeadline();
-
-    /* HW_AHBPROT check */
-    if (AHBPROT_DISABLED)
-    {
-        /* Disable memory protection */
-        DisableMemoryProtection();
-
-        /* Patch ISFS access permissions */
-        if (PatchNandFsPermissions())
-        {
-            /* Get keys */
-            ret = XyzzyGetKeys();
-            if (ret != -2) printf("\nPress any button to exit.");
-        } else {
-            printf("Failed to patch ISFS access permissions! Press any button to exit.");
-        }
-    } else {
-        /* HW_AHBPROT flag is enabled */
-        printf("The HW_AHBPROT hardware register is not disabled.\n");
-        printf("Maybe you didn't load the application from a loader\n");
-        printf("capable of passing arguments (you should use HBC\n");
-        printf("1.1.0 or later). Or, perhaps, you don't have the\n");
-        printf("\"<ahb_access/>\" node in the meta.xml file, which is\n");
-        printf("very important.\n\n");
-        printf("Remember that this application can't do its job\n");
-        printf("without full hardware access rights.\n");
-        printf("\nProcess cannot continue. Press any button to exit.");
+void draw_editor() {
+    printf("\x1b[2;0H"); // Move cursor to top
+    printf("--- Wii SEEPROM Hex Editor ---\n");
+    printf("Use D-Pad to move, A/B to change, PLUS to Write, HOME to Exit\n\n");
+    
+    for (int i = 0; i < 256; i++) {
+        if (i == cursor) printf("\x1b[30;47m%02X\x1b[0m ", seeprom_data[i]); // Invert colors for cursor
+        else printf("%02X ", seeprom_data[i]);
+        
+        if ((i + 1) % 16 == 0) printf("\n");
     }
+    printf("\nCurrently editing offset: 0x%02X\n", cursor);
+    printf("Boot2 Version Byte is at 0x88\n");
+}
 
-    if (ret != -2) WaitForButtonPress(NULL, NULL);
+int main(int argc, char **argv) {
+    VIDEO_Init();
+    WPAD_Init();
+    
+    void *rmode = VIDEO_GetPreferredMode(NULL);
+    void *xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+    console_init(xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight, rmode->fbWidth * VI_DISPLAY_PIX_SZ);
+    VIDEO_Configure(rmode);
+    VIDEO_SetNextFramebuffer(xfb);
+    VIDEO_SetBlack(FALSE);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
 
-    Reboot();
+    // Initial Read
+    // seeprom_read(0, 256, seeprom_data); 
 
+    while(1) {
+        WPAD_ScanPads();
+        u32 pressed = WPAD_ButtonsDown(0);
+
+        if (pressed & WPAD_BUTTON_HOME) exit(0);
+
+        // Navigation
+        if (pressed & WPAD_BUTTON_RIGHT) cursor = (cursor + 1) % 256;
+        if (pressed & WPAD_BUTTON_LEFT)  cursor = (cursor - 1 + 256) % 256;
+        if (pressed & WPAD_BUTTON_DOWN)  cursor = (cursor + 16) % 256;
+        if (pressed & WPAD_BUTTON_UP)    cursor = (cursor - 16 + 256) % 256;
+
+        // Editing
+        if (pressed & WPAD_BUTTON_A) seeprom_data[cursor]++;
+        if (pressed & WPAD_BUTTON_B) seeprom_data[cursor]--;
+
+        // Writing (THE DANGER ZONE)
+        if (pressed & WPAD_BUTTON_PLUS) {
+            printf("\nWRITING TO PHYSICAL SEEPROM... ");
+            // seeprom_write(0, 256, seeprom_data);
+            printf("DONE!\n");
+        }
+
+        draw_editor();
+        VIDEO_WaitVSync();
+    }
     return 0;
 }
