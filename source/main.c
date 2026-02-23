@@ -7,7 +7,7 @@
 // Your buffer to hold the 256 bytes of SEEPROM data
 u8 seeprom_data[256];
 int cursor = 0x88; // Default to the Boot2 version offset
-s32 seeprom_write(u32 addr, u32 size, void *src);
+
 void draw_editor() {
     printf("\x1b[2;0H"); // Move cursor to top
     printf("--- Wii SEEPROM Hex Editor ---\n");
