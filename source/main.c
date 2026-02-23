@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
-#include "mini-seeprom.h"
+#include "mini_seeprom.h"
 
 // Your buffer to hold the 256 bytes of SEEPROM data
 u8 seeprom_data[256];
